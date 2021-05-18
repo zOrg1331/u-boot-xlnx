@@ -8,6 +8,8 @@
 #include <asm/sections.h>
 #include <dm/uclass.h>
 #include <i2c.h>
+#include <spi.h>
+#include <spi_flash.h>
 #include <malloc.h>
 #include "board.h"
 #include <dm.h>
@@ -38,6 +40,36 @@ int zynq_board_read_rom_ethaddr(unsigned char *ethaddr)
 		debug("%s: I2C EEPROM MAC address read failed\n", __func__);
 	else
 		debug("%s: I2C EEPROM MAC %pM\n", __func__, ethaddr);
+
+	return ret;
+}
+#endif
+
+#if defined(CONFIG_ZYNQ_QSPI) && defined(CONFIG_ZYNQ_GEM_SPI_MAC_OFFSET)
+int zynq_board_read_rom_ethaddr(unsigned char *ethaddr)
+{
+	int ret = -EINVAL;
+#define CMD_OTPREAD_ARRAY_FAST		0x4b
+	struct spi_flash *flash;
+	flash = spi_flash_probe(CONFIG_SF_DEFAULT_BUS,
+				CONFIG_SF_DEFAULT_CS,
+				CONFIG_SF_DEFAULT_SPEED,
+				CONFIG_SF_DEFAULT_MODE);
+	if (!flash) {
+		printf("SPI(bus:%u cs:%u) probe failed\n",
+			CONFIG_SF_DEFAULT_BUS,
+			CONFIG_SF_DEFAULT_CS);
+		return -ENODEV;
+	}
+	flash->read_opcode = CMD_OTPREAD_ARRAY_FAST;
+	ret = spi_flash_read(flash, CONFIG_ZYNQ_GEM_SPI_MAC_OFFSET, 6, ethaddr);
+	if (ret)
+		debug("%s: SPI EEPROM MAC address read failed\n", __func__);
+	else
+		debug("%s: SPI EEPROM MAC %pM\n", __func__, ethaddr);
+
+	if (flash)
+		spi_flash_free(flash);
 
 	return ret;
 }

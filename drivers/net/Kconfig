@@ -449,6 +449,13 @@ config ZYNQ_GEM
 	help
 	  This MAC is present in Xilinx Zynq and ZynqMP SoCs.
 
+if ZYNQ_GEM
+
+config ZYNQ_GEM_SPI_MAC_OFFSET
+	hex "Xilinx MAC QSPI offset"
+
+endif # ZYNQ_GEM
+
 config PIC32_ETH
 	bool "Microchip PIC32 Ethernet Support"
 	depends on DM_ETH && MACH_PIC32
